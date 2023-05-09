@@ -314,20 +314,17 @@ Are you ready to explore the fascinating realm of letter combinations in names? 
 ```{r question-4-transform}
 tbl_names_by_first_and_last_letter = tbl_names |> 
   # Filter for sex = "F"
-  
+  filter(sex == "F") |>
   # Group by `first_letter`, `last_letter`, and `year`
-  
+  group_by(first_letter, last_letter, year) |>
   # Summarize total number of births
-  
-  
-  
-  
+  summarize(nb_births = sum(nb_births), .groups = "drop") |>
   # Group by `year`
-  
+  group_by(year) |>
   # Add NEW column pct_births by dividing nb_births by sum(nb_births)
-
+  mutate(pct_births = nb_births/sum(nb_births)) |>
   # Ungroup data
-
+  ungroup()
 
 tbl_names_by_first_and_last_letter
 ```
@@ -340,19 +337,19 @@ Now, you will visualize the distribution of `pct_births` by `last_letter` and `f
 ```{r question-4-visualize}
 tbl_names_by_first_and_last_letter |> 
   # Filter for the year 2021
-  
+  filter(year == 2021) |>
   # Initialize a ggplot of last_letter vs. first_letter
-  
+  ggplot(aes(x=first_letter, y=last_letter, fill=pct_births)) + 
   # Add a `geom_tile` layer with fill mapped to pct_births
-  
+  geom_tile() + 
   # Add labels (title, subtitle, x, y, fill)
- 
-  
-  
-  
-
-
-
+  labs(
+      title = "Percentage of first letter and last letter combinations in names",
+      subtitle = "based on year 2021",
+      caption = "combination of first letter an last letter of baby names in year 2021",
+      x = "first letter",
+      y = 'last letter'
+    )+
   # Update fill scale to use Viridis colors
   scale_fill_viridis_b(direction = -1) +
   # Update plotting theme
@@ -381,24 +378,21 @@ get_letter_type <- function(letter) {
 
 tbl_names_vowel_consonant <- tbl_names |> 
   # Add NEW column named `first_letter_type`
-  
+  mutate(first_letter_type = get_letter_type(first_letter)) |>
   # Add NEW column named `last_letter_type`
-  
+  mutate(last_letter_type = get_letter_type(last_letter)) |>
   # Group by `sex`, `year`, `first_letter_type` and `last_letter_type`
-  
+  group_by(sex, year, first_letter_type, last_letter_type) |>
   # Summarize the total number of births
-  
-  
-  
-  
+  summarize(nb_births = sum(nb_births), .groups = "drop") |>
   # Group by `sex` and` `year`
-  
+  group_by(sex, year) |>
   # Add NEW column with `pct_births` calculated as `nb_births / sum(nb_births)`
-   
+  mutate(pct_births = nb_births / sum(nb_births)) |>
   # Ungroup the data
-  
+  ungroup() |>
   # Unite `first_letter_type` and `last_letter_type` into a NEW column named `first_last`
- 
+  mutate(first_last = paste(first_letter_type, last_letter_type, sep = "-"))
 
 tbl_names_vowel_consonant
 ```
@@ -412,20 +406,19 @@ tbl_names_vowel_consonant |>
   # Reorder `first_last` by the median `pct_births`
   mutate(first_last = fct_reorder(first_last, pct_births, median)) |>
   # Initialize a ggplot of `pct_births` vs. `year`
-  
+  ggplot(aes(x=year, y=pct_births, fill=first_last)) + 
   # Add an area layer with fill = first_last
-  
+  geom_area() + 
   # Facet wrap plot by `sex`
-  
+  facet_wrap("sex") + 
   # Add labels (title, subtitle, caption, x, y)
-  
-  
-  
-  
-
-
-
-
+  labs(
+      title = "percentage of letter types",
+      subtitle = "trends in all years, seperated by sex",
+      caption = "the percentage of combination of letter types in all of the years available for baby names",
+      x = "year",
+      y = 'percentage'
+    ) +
   # Clean up x and y axis scales
   scale_x_continuous(
     expand = c(0, 0)
