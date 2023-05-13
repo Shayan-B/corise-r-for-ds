@@ -1,5 +1,5 @@
 FROM rocker/verse:4.3.0
-LABEL version=11
+LABEL version=12
 
 # Install 
 RUN apt-get update && \
@@ -15,4 +15,5 @@ COPY ./DESCRIPTION /tmp/DESCRIPTION
 RUN Rscript -e "devtools::install_deps('/tmp', upgrade = FALSE)"
 
 COPY ./.rstudio/rstudio-prefs.json /etc/rstudio/rstudio-prefs.json
+COPY .rstudio/rsession.conf /etc/rstudio/rsession.conf
 
