@@ -460,7 +460,7 @@ tbl_names_by_letter |>
 <img src="img/question-3-visualize-3-1.png" width="100%" style="display: block; margin: auto;" />
 
 Write a function that plot trends in the percentage of births for all
-names starting with a specific first letter.
+names Ending with a specific last letter.
 
 ``` r
 plot_trends_in_last_letter <- function(my_letter) {
