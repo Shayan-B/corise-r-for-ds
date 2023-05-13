@@ -392,6 +392,104 @@ plot_trends_in_letter("S")
 | \[BONUS\]                                                                                                                                                                                                                                                                               |
 | How do these plots change when you focus on the `last_letter` instead of the `first_letter`. Feel free to go back and change `first_letter` to `last_letter` and see what you find. Try to make an educated guess before you run the code, so you can see if your intuition matches up! |
 
+#### Question3 - Visualize By Last Letter
+
+``` r
+tbl_names_by_letter = tbl_names |> 
+  # Group by year, sex and first_letter
+  group_by(year, sex, last_letter) |> 
+  # Summarize total number of births, drop the grouping
+  summarize(nb_births = sum(nb_births), .groups = "drop") |> 
+  # Group by year and sex
+  group_by(year, sex) |> 
+  # Add NEW column pct_births by dividing nb_births by sum(nb_births)
+  mutate(pct_births = nb_births / sum(nb_births))
+  
+tbl_names_by_letter
+```
+
+    #> # A tibble: 6,737 × 5
+    #> # Groups:   year, sex [284]
+    #>     year sex   last_letter nb_births pct_births
+    #>    <dbl> <chr> <chr>           <dbl>      <dbl>
+    #>  1  1880 F     A               31446  0.346    
+    #>  2  1880 F     D                 609  0.00669  
+    #>  3  1880 F     E               33381  0.367    
+    #>  4  1880 F     G                   7  0.0000769
+    #>  5  1880 F     H                4863  0.0534   
+    #>  6  1880 F     I                  61  0.000670 
+    #>  7  1880 F     K                  13  0.000143 
+    #>  8  1880 F     L                2541  0.0279   
+    #>  9  1880 F     M                  58  0.000637 
+    #> 10  1880 F     N                3008  0.0331   
+    #> # ℹ 6,727 more rows
+
+Visualize the distribution of births by **last** letter for the year
+2020, faceted by sex.
+
+``` r
+tbl_names_by_letter |> 
+  # Filter for the year 2020
+  filter(year == 2020) |>
+  # Initialize a ggplot of pct_births vs. first_letter
+  ggplot(aes(x=last_letter, y=pct_births)) +
+  # Add a column layer using `geom_col()`
+  geom_col() +
+  # Facet wrap plot by sex
+  facet_wrap(~sex, scales="free_y") + 
+  # Add labels (title, subtitle, x, y)
+  labs(
+    title = 'distribution of births in year 2020',
+    subtitle = 'based on last letters',
+    x = 'first letters in names',
+    y = 'percentage of letters'
+  ) +
+  # Fix scales of y axis
+  scale_y_continuous(
+    expand = c(0.25, 0),
+    labels = scales::percent_format(accuracy = 1L)
+  ) +
+  # Update plotting theme
+  theme(
+    plot.title.position = "plot",
+    axis.ticks.x = element_blank(),
+    panel.grid.major.x = element_blank()
+  )
+```
+
+<img src="img/question-3-visualize-3-1.png" width="100%" style="display: block; margin: auto;" />
+
+Write a function that plot trends in the percentage of births for all
+names starting with a specific first letter.
+
+``` r
+plot_trends_in_last_letter <- function(my_letter) {
+  tbl_names_by_letter |> 
+    # Filter for first_letter = my_letter
+    filter(last_letter == my_letter) |> 
+    # Initialize a ggplot of pct_births vs. year colored by sex
+    ggplot(aes(x=year, y=pct_births, color=sex)) + 
+    # Add a line layer
+    geom_line() +
+    # Add labels (title, subtitle, caption, x, y)
+    labs(
+      title = glue::glue("Trends in Names Ending with {my_letter}"),
+      subtitle = "showing the trends for each sex seperately",
+      caption = glue::glue("trends for letter {my_letter}"),
+      x = "years",
+      y = 'percentage of names'
+    ) +
+    # Update y-axis scales to display percentages
+    scale_y_continuous(labels = scales::percent_format(accuracy = 1L)) +
+    # Update theme
+    theme(plot.title.position = "plot")
+}
+
+plot_trends_in_last_letter("S")
+```
+
+<img src="img/question-3-visualize-4-1.png" width="100%" style="display: block; margin: auto;" />
+
 ### Question 4: \[Unveiling Letter Combinations\] What secrets do the most popular letter combinations hold?
 
 Are you ready to explore the fascinating realm of letter combinations in
