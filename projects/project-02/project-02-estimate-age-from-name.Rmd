@@ -7,7 +7,7 @@ output: github_document
 library(tidyverse)
 knitr::opts_chunk$set(
   echo = TRUE,
-  eval = FALSE,
+  eval = TRUE,
   collapse = TRUE,
   comment = "#>",
   fig.path = "img/",
@@ -373,7 +373,7 @@ tbl_names_extended_age |>
       xend = x75_percent, 
       yend = name
     ),
-    color = "lightblue",
+    color = "orange",
     linewidth = 5
   ) +
   # Add a point layer:
