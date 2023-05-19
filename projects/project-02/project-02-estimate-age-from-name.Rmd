@@ -226,7 +226,7 @@ tbl_names_extended <- tbl_names |>
   # Remove the column `lx`
   select(!lx) |> 
   # Add NEW column nb_alive (= p_alive * nb_births) for number of people alive 
-  mutate(nb_alibe = p_alive * nb_births)
+  mutate(nb_alive = p_alive * nb_births)
 
 tbl_names_extended
 ```
@@ -256,7 +256,7 @@ estimate_age_stats <- function(tbl) {
 
 tbl_names_extended |> 
   # Filter for Gertrude/F
-  dplyr::filter(name == "___", sex == "___") |>
+  dplyr::filter(name == "Gertrude", sex == "F") |>
   # Estimate age stats
   estimate_age_stats()
 ```
@@ -267,15 +267,15 @@ Let us write another function that plots the age distribution for a person based
 plot_estimated_age <- function(tbl, my_name, my_sex) {
   tbl |> 
     # Filter to keep only rows with `my_name` and `my_sex`
-    filter(name == ___, sex == ___) |> 
+    filter(name == my_name, sex == my_sex) |> 
     # Add a column `age_median` with the weighted mean of age and nb_alive
     mutate(age_median = weighted.mean(age, nb_alive)) |> 
     # Initialize a ggplot with x = year
-
+    ggplot(aes(x=year))+
     # Add a column layer with y = nb_alive, and appropriate colors
-    
+    geom_col(aes(y=nb_alive, color=sex))+
     # Add a line layer with y = nb_births, and appropriate colors
-    
+    geom_line(aes(y=nb_births, color=sex))+
     # Add a vertical line for the median age
     geom_vline(
       aes(xintercept = 2022 - age_median), 
@@ -286,7 +286,7 @@ plot_estimated_age <- function(tbl, my_name, my_sex) {
     labs(
       title = glue::glue('Age Distribution of American Girls Named {my_name}'),
       subtitle = "___",
-      x = "___"
+      x = "___",
       y = "___"
     ) +
     # Add an annotation for number of people estimated to be alive
@@ -305,7 +305,7 @@ plot_estimated_age <- function(tbl, my_name, my_sex) {
       x = 2002,
       y = 14000,
       aes(label = glue::glue(
-        "The median \n {name} is \n {round(age_median, 0)} years old"
+        "The median of name \n {name} is \n {round(age_median, 0)} years old"
       )),
       color = 'darkred'
     ) +
