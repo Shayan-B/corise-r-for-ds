@@ -323,19 +323,20 @@ Let us now get the top 25 most popular names for Females.
 # Create `tbl_names_female_top_25` with name and sex for top 25 females
 tbl_names_female_top_25 <- tbl_names |>
   # Group by sex and name
-  
+  group_by(sex, name)|>
   # Summarize total number of births
-  
+  summarize(total_nb_births=sum(nb_births), .groups="drop") |>
   # Remove column nb_births
-  
+  # by summarizing the table it is already dropped
   # Filter only Females
-
+  filter(sex=="F") |>
   # Slice top 25 rows
-  
+  arrange(desc(total_nb_births)) |> slice_head(n=25) |>
   # Select name and sex
-  
+  select(name, sex)
 
 # Print `tbl_names_female_top_25`
+tbl_names_female_top_25
 
 ```
 
@@ -344,13 +345,13 @@ Let us join `tbl_names_extended` with `tbl_names_female_top_25` so that we only 
 ```{r tbl-names-extended-age}
 tbl_names_extended_age <- tbl_names_extended |> 
   # Inner join the `tbl_names_female_top_25` table by `sex` and `name`
-  
+  inner_join(tbl_names_female_top_25, by=c("sex", "name")) |>
   # Group by name and sex
-   
+  group_by(sex, name) |>
   # Estimate age stats
   estimate_age_stats() |> 
   # Arrange the data based on median age
-   
+  ungroup() |> arrange(desc(age_median)) |>
   # Clean the names
   janitor::clean_names()
 
@@ -364,25 +365,25 @@ tbl_names_extended_age |>
   # Reorder name based on descending median age 
   mutate(name = fct_reorder(name, desc(age_median))) |> 
   # Initialize a ggplot of age_median vs. name
-  
+  ggplot(aes(x=age_median, y=name)) +
   # Add a segment layer: x = x25_percent, xend = x75_percent and y_end = name
   geom_segment(
     aes(
-      x = ___,
-      xend = ___, 
-      yend = ___
+      x = x25_percent,
+      xend = x75_percent, 
+      yend = name
     ),
-    color = ""___"",
+    color = "lightblue",
     linewidth = 5
   ) +
   # Add a point layer:
-  geom_point(size = 2, color = ""___"") +
+  geom_point(size = 2, color = "red") +
   # Add labels (title, subtitle, x, y)
   labs(
-    title = "___",
-    subtitle = "___",
-    x = "___",
-    y = "___"
+    title = "The range for 25% to 75% of Age for Names (Females)",
+    subtitle = "Sorted by Median Age",
+    x = "Age",
+    y = "Name"
   ) +
   # Update theme to clean up visual appearance of the plot
   theme(

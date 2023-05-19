@@ -3,13 +3,14 @@
 
 ![shakespeare-whats-in-a-name](https://miro.medium.com/v2/resize:fit:800/1*Prp8tivsOP54c-bPTpxj5A.png)
 
-So, what more is in a name? Well, with some further work, it is possible
-to predict the age of a person based on the name (Whoa! Really????). The
-popular FiveThirtyEight published a [blog
+So, what more is in a name? Believe it or not, it is possible to predict
+the age of a person based on their name (Whoa! Really????). In fact,
+FiveThirtyEight, a popular website that focuses on data-driven
+journalism, published a [blog
 post](https://fivethirtyeight.com/features/how-to-tell-someones-age-when-all-you-know-is-her-name/)
-on this in 2014. Would it not be fun to try and replicate the results?
-Actually, we are going to do more than just replicate the results, since
-we now have 7 years worth of additional data.
+on this in 2014. Wouldn’t it be exciting to try and replicate their
+findings? Actually, we are going to do more than just replicate their
+results, since we now have 7 years worth of additional data.
 
 ![estimate-age-from-name](https://fivethirtyeight.com/wp-content/uploads/2014/05/silver-feature-most-common-women-names3.png)
 
@@ -17,17 +18,19 @@ we now have 7 years worth of additional data.
 
 #### Names
 
-Let us start by reading in the babynames data from `data/names.csv.gz`.
+Let us start by reading in the baby names data from `data/names.csv.gz`.
 
 ``` r
 # Load the tidyverse package
 
-
+library(tidyverse)
 # Read data/names.csv.gz into a data frame named `tbl_names`
-
-
+source(here::here("_common.R"))
+file_names <- here::here("data/names.csv.gz")
+tbl_names <- readr::read_csv(file_names, show_col_types = FALSE)
 
 # Print tbl_names
+tbl_names
 ```
 
 #### Lifetables
@@ -114,9 +117,10 @@ We already ran the code above and saved the data as
 
 ``` r
 # Read data/lifetables.csv.gz into a data frame named `tbl_lifetables`
-
-
+file_names <- here::here("data/lifetables.csv.gz")
+tbl_lifetables <- read_csv(file_names, show_col_types = FALSE)
 # Print `tbl_lifetables`
+tbl_lifetables
 ```
 
 It is always a good idea to plot the data to understand it better. Given
@@ -127,18 +131,18 @@ were born.
 ``` r
 tbl_lifetables |> 
   # Filter for rows where age and year sum up to 2022
-  filter(___ + ___ == ___) |> 
+  filter(year + age == 2022) |> 
   # Initialize a ggplot of year vs. probability of being alive (lx/10^5)
-  ___(___(x = ___, y = ___, color = ___)) +
+  ggplot(aes(x = year, y = lx/1e5, color = sex)) +
   # Add a step layer
   geom_step() +
   # Add labels (title, subtitle, x, y, caption)
   labs(
-    title = ""___"",
-    subtitle = ""___"",
-    x = "___",
-    y = ""___"",
-    caption = ""Source: ___""
+    title = "Probability of Survival of babies which were born in different years",
+    subtitle = "Seperate for each Sex (Based On Deacdes Data)",
+    x = "Birth Year",
+    y = " Probability of Survival",
+    caption = "Source: SSA Website"
   ) +
   # Update theme to move plot title
   theme(plot.title.position = 'plot')
@@ -179,9 +183,9 @@ no longer necessary.
 ``` r
 tbl_lifetables_extended <- tbl_lifetables |> 
   # Select the columns sex, age, year, and lx
-  
+  select(sex, age, year, lx) |>
   # Group by sex and age
-  
+  group_by(sex, age) |>
   # Complete the sequence of years
   complete(year = full_seq(year, period = 1)) |> 
   # Add a NEW boolean column to indicate if the data is imputed
@@ -203,23 +207,23 @@ tbl_lifetables_extended_2022 <- tbl_lifetables_extended |>
 
 tbl_lifetables_extended_2022 |> 
   # Initialize a ggplot of year vs. probability of being alive (lx/10^5)
-  
+  ggplot(aes(x=year, y=lx/1e5, color=sex))+
   # Add a line layer
- 
+  geom_line()+
   # Add a step layer for the non-imputed data
   geom_step(
     data = function(d) filter(d, !is_imputed),
     linetype = 'dashed'
   ) +
   # Add labels (title, subtitle, x, y, caption)
-
-  
-  
-  
-  
-  
-  
-  # Update theme to move plot title
+  labs(
+    title = "Probability of Survival of babies which were born in different years",
+    subtitle = "Seperate for each Sex (Based On Interpolated data for each year)",
+    x="Year",
+    y="Probability of Survival",
+    caption="Source: SSA Website"
+  )+
+    # Update theme to move plot title
   theme(plot.title.position = 'plot')
 ```
 
@@ -236,15 +240,15 @@ that year.
 ``` r
 tbl_names_extended <- tbl_names |> 
   # Left join with `tbl_lifetables_extended_2022` by `sex` and `year`.
-  ___(___, by = c("___", "___")) |> 
+  left_join(tbl_lifetables_extended_2022, by = c("sex", "year")) |> 
   # Remove any NAs in the age column
   filter(!is.na(age)) |> 
   # Add NEW column p_alive (= lx / 10^5) for probability of being alive
-  ___(___ = ___ / ___) |> 
+  mutate(p_alive = lx /1e5) |> 
   # Remove the column `lx`
   select(!lx) |> 
   # Add NEW column nb_alive (= p_alive * nb_births) for number of people alive 
-  ___(___ = ___ * ___)
+  mutate(nb_alive = p_alive * nb_births)
 
 tbl_names_extended
 ```
@@ -279,7 +283,7 @@ estimate_age_stats <- function(tbl) {
 
 tbl_names_extended |> 
   # Filter for Gertrude/F
-  dplyr::filter(name == "___", sex == "___") |>
+  dplyr::filter(name == "Gertrude", sex == "F") |>
   # Estimate age stats
   estimate_age_stats()
 ```
@@ -292,15 +296,15 @@ visualize the age distribution for people with different names.
 plot_estimated_age <- function(tbl, my_name, my_sex) {
   tbl |> 
     # Filter to keep only rows with `my_name` and `my_sex`
-    filter(name == ___, sex == ___) |> 
+    filter(name == my_name, sex == my_sex) |> 
     # Add a column `age_median` with the weighted mean of age and nb_alive
     mutate(age_median = weighted.mean(age, nb_alive)) |> 
     # Initialize a ggplot with x = year
-
+    ggplot(aes(x=year))+
     # Add a column layer with y = nb_alive, and appropriate colors
-    
+    geom_col(aes(y=nb_alive, color=p_alive), alpha=0.3)+
     # Add a line layer with y = nb_births, and appropriate colors
-    
+    geom_line(aes(y=nb_births, color=age))+
     # Add a vertical line for the median age
     geom_vline(
       aes(xintercept = 2022 - age_median), 
@@ -311,8 +315,8 @@ plot_estimated_age <- function(tbl, my_name, my_sex) {
     labs(
       title = glue::glue('Age Distribution of American Girls Named {my_name}'),
       subtitle = "___",
-      x = "___"
-      y = "___"
+      x = "Birth Year",
+      y = "Number of births/Number of people Alive"
     ) +
     # Add an annotation for number of people estimated to be alive
     annotate(
@@ -330,7 +334,7 @@ plot_estimated_age <- function(tbl, my_name, my_sex) {
       x = 2002,
       y = 14000,
       aes(label = glue::glue(
-        "The median \n {name} is \n {round(age_median, 0)} years old"
+        "The median of name \n {name} is \n {round(age_median, 0)} years old"
       )),
       color = 'darkred'
     ) +
@@ -348,19 +352,20 @@ Let us now get the top 25 most popular names for Females.
 # Create `tbl_names_female_top_25` with name and sex for top 25 females
 tbl_names_female_top_25 <- tbl_names |>
   # Group by sex and name
-  
+  group_by(sex, name)|>
   # Summarize total number of births
-  
+  summarize(total_nb_births=sum(nb_births), .groups="drop") |>
   # Remove column nb_births
-  
+  # by summarizing the table it is already dropped
   # Filter only Females
-
+  filter(sex=="F") |>
   # Slice top 25 rows
-  
+  arrange(desc(total_nb_births)) |> slice_head(n=25) |>
   # Select name and sex
-  
+  select(name, sex)
 
 # Print `tbl_names_female_top_25`
+tbl_names_female_top_25
 ```
 
 Let us join `tbl_names_extended` with `tbl_names_female_top_25` so that
@@ -369,13 +374,13 @@ we only keep rows corresponding to the top 25 female names.
 ``` r
 tbl_names_extended_age <- tbl_names_extended |> 
   # Inner join the `tbl_names_female_top_25` table by `sex` and `name`
-  
+  inner_join(tbl_names_female_top_25, by=c("sex", "name")) |>
   # Group by name and sex
-   
+  group_by(sex, name) |>
   # Estimate age stats
   estimate_age_stats() |> 
   # Arrange the data based on median age
-   
+  ungroup() |> arrange(desc(age_median)) |>
   # Clean the names
   janitor::clean_names()
 
@@ -391,25 +396,25 @@ tbl_names_extended_age |>
   # Reorder name based on descending median age 
   mutate(name = fct_reorder(name, desc(age_median))) |> 
   # Initialize a ggplot of age_median vs. name
-  
+  ggplot(aes(x=age_median, y=name)) +
   # Add a segment layer: x = x25_percent, xend = x75_percent and y_end = name
   geom_segment(
     aes(
-      x = ___,
-      xend = ___, 
-      yend = ___
+      x = x25_percent,
+      xend = x75_percent, 
+      yend = name
     ),
-    color = ""___"",
+    color = "lightblue",
     linewidth = 5
   ) +
   # Add a point layer:
-  geom_point(size = 2, color = ""___"") +
+  geom_point(size = 2, color = "red") +
   # Add labels (title, subtitle, x, y)
   labs(
-    title = "___",
-    subtitle = "___",
-    x = "___",
-    y = "___"
+    title = "The range for 25% to 75% of Age for Names (Females)",
+    subtitle = "Sorted by Median Age",
+    x = "Age",
+    y = "Name"
   ) +
   # Update theme to clean up visual appearance of the plot
   theme(
