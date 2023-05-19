@@ -41,12 +41,14 @@ Let us start by reading in the baby names data from `data/names.csv.gz`.
 ```{r tbl-names, message=FALSE}
 # Load the tidyverse package
 
-
+library(tidyverse)
 # Read data/names.csv.gz into a data frame named `tbl_names`
-
-
+source(here::here("_common.R"))
+file_names <- here::here("data/names.csv.gz")
+tbl_names <- readr::read_csv(file_names, show_col_types = FALSE)
 
 # Print tbl_names
+tbl_names
 
 ```
 
@@ -118,10 +120,10 @@ We already ran the code above and saved the data as `data/lifetables.csv.gz`. Le
 
 ```{r tbl-lifetables}
 # Read data/lifetables.csv.gz into a data frame named `tbl_lifetables`
-
-
+file_names <- here::here("data/lifetables.csv.gz")
+tbl_lifetables <- read_csv(file_names, show_col_types = FALSE)
 # Print `tbl_lifetables`
-
+tbl_lifetables
 ```
 
 It is always a good idea to plot the data to understand it better. Given that this is a table of probabilities of survival, let us plot the survival curve for a person to be alive in 2022 based on the year they were born.
@@ -129,18 +131,18 @@ It is always a good idea to plot the data to understand it better. Given that th
 ```{r plot-lifetables}
 tbl_lifetables |> 
   # Filter for rows where age and year sum up to 2022
-  filter(___ + ___ == ___) |> 
+  filter(year + age == 2022) |> 
   # Initialize a ggplot of year vs. probability of being alive (lx/10^5)
-  ___(___(x = ___, y = ___, color = ___)) +
+  ggplot(aes(x = year, y = lx/1e5, color = sex)) +
   # Add a step layer
   geom_step() +
   # Add labels (title, subtitle, x, y, caption)
   labs(
-    title = ""___"",
-    subtitle = ""___"",
-    x = "___",
-    y = ""___"",
-    caption = ""Source: ___""
+    title = "Probability of Survival of babies which were born in different years",
+    subtitle = "Seperate for each Sex (Based On Deacdes Data)",
+    x = "Birth Year",
+    y = " Probability of Survival",
+    caption = "Source: SSA Website"
   ) +
   # Update theme to move plot title
   theme(plot.title.position = 'plot')
@@ -164,9 +166,9 @@ Given that we want to interpolate for all combinations of `sex` and `age`, we fi
 ```{r tbl-lifetables-extended}
 tbl_lifetables_extended <- tbl_lifetables |> 
   # Select the columns sex, age, year, and lx
-  
+  select(sex, age, year, lx) |>
   # Group by sex and age
-  
+  group_by(sex, age) |>
   # Complete the sequence of years
   complete(year = full_seq(year, period = 1)) |> 
   # Add a NEW boolean column to indicate if the data is imputed
@@ -187,23 +189,23 @@ tbl_lifetables_extended_2022 <- tbl_lifetables_extended |>
 
 tbl_lifetables_extended_2022 |> 
   # Initialize a ggplot of year vs. probability of being alive (lx/10^5)
-  
+  ggplot(aes(x=year, y=lx/1e5, color=sex))+
   # Add a line layer
- 
+  geom_line()+
   # Add a step layer for the non-imputed data
   geom_step(
     data = function(d) filter(d, !is_imputed),
     linetype = 'dashed'
   ) +
   # Add labels (title, subtitle, x, y, caption)
-
-  
-  
-  
-  
-  
-  
-  # Update theme to move plot title
+  labs(
+    title = "Probability of Survival of babies which were born in different years",
+    subtitle = "Seperate for each Sex (Based On Interpolated data for each year)",
+    x="Year",
+    y="Probability of Survival",
+    caption="Source: SSA Website"
+  )+
+    # Update theme to move plot title
   theme(plot.title.position = 'plot')
 ```
 
@@ -216,15 +218,15 @@ Let us now join `tbl_names` with `tbl_lifetables_extended_2022` and add two extr
 ```{r tbl-names-extended}
 tbl_names_extended <- tbl_names |> 
   # Left join with `tbl_lifetables_extended_2022` by `sex` and `year`.
-  ___(___, by = c("___", "___")) |> 
+  left_join(tbl_lifetables_extended_2022, by = c("sex", "year")) |> 
   # Remove any NAs in the age column
   filter(!is.na(age)) |> 
   # Add NEW column p_alive (= lx / 10^5) for probability of being alive
-  ___(___ = ___ / ___) |> 
+  mutate(p_alive = lx /1e5) |> 
   # Remove the column `lx`
   select(!lx) |> 
   # Add NEW column nb_alive (= p_alive * nb_births) for number of people alive 
-  ___(___ = ___ * ___)
+  mutate(nb_alibe = p_alive * nb_births)
 
 tbl_names_extended
 ```
