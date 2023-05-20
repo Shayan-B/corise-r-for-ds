@@ -273,9 +273,9 @@ plot_estimated_age <- function(tbl, my_name, my_sex) {
     # Initialize a ggplot with x = year
     ggplot(aes(x=year))+
     # Add a column layer with y = nb_alive, and appropriate colors
-    geom_col(aes(y=nb_alive, color=p_alive), alpha=0.3)+
+    geom_col(aes(y=nb_alive), color="blue", alpha=0.3)+
     # Add a line layer with y = nb_births, and appropriate colors
-    geom_line(aes(y=nb_births, color=age))+
+    geom_line(aes(y=nb_births), color="green")+
     # Add a vertical line for the median age
     geom_vline(
       aes(xintercept = 2022 - age_median), 
@@ -380,8 +380,8 @@ tbl_names_extended_age |>
   geom_point(size = 2, color = "red") +
   # Add labels (title, subtitle, x, y)
   labs(
-    title = "The range for 25% to 75% of Age for Names (Females)",
-    subtitle = "Sorted by Median Age",
+    title = "Median Ages for Females with the 25 Most Common Names",
+    subtitle = "Among Americans Estimated to Be Alive",
     x = "Age",
     y = "Name"
   ) +
